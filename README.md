@@ -1,6 +1,10 @@
 # Marketing Data Intelligence
 
-An intelligent ML system for marketing data analysis featuring discount prediction and RAG-powered Q&A using Google's Gemini 2.5 Flash.
+An intelligent ML system for marketing data analysis featuring discount prediction and RAG-powered Q&A using Google's Gemini 2.0 Flash.
+
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
 
@@ -12,22 +16,82 @@ An intelligent ML system for marketing data analysis featuring discount predicti
 
 ## Architecture
 
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        Client[Client Applications]
+    end
+    
+    subgraph "API Layer"
+        FastAPI[FastAPI Application]
+        subgraph "Endpoints"
+            Predict[/predict_discount]
+            QA[/answer_question]
+            Analysis[/analysis/summary]
+        end
+    end
+    
+    subgraph "Core Services"
+        subgraph "ML Engine"
+            LightGBM[LightGBM Predictor]
+            SHAP[SHAP Explainer]
+            Drift[Drift Detector]
+        end
+        
+        subgraph "RAG Engine"
+            Embedder[Sentence Transformers]
+            Retriever[Document Retriever]
+        end
+    end
+    
+    subgraph "External Services"
+        Qdrant[(Qdrant Vector DB)]
+        Gemini[Gemini 2.0 Flash]
+    end
+    
+    subgraph "Monitoring"
+        Prometheus[Prometheus]
+        Grafana[Grafana]
+    end
+    
+    Client --> FastAPI
+    FastAPI --> Predict --> LightGBM
+    FastAPI --> QA --> Retriever --> Qdrant
+    Retriever --> Gemini
+    LightGBM --> SHAP
+    LightGBM --> Drift
+    FastAPI --> Prometheus --> Grafana
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        FastAPI                               │
-├─────────────────┬───────────────────┬───────────────────────┤
-│  /predict_discount  │  /answer_question  │  /explain          │
-├─────────────────┴───────────────────┴───────────────────────┤
-│                                                               │
-│  ┌─────────────┐   ┌─────────────┐   ┌─────────────────────┐│
-│  │  LightGBM   │   │   Qdrant    │   │   Gemini 2.5 Flash  ││
-│  │  Predictor  │   │  Vector DB  │   │        LLM          ││
-│  └─────────────┘   └─────────────┘   └─────────────────────┘│
-│                                                               │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │  SHAP Explainer  │  Drift Detector  │  Prometheus       ││
-│  └─────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────┘
+
+## Data Flow
+
+```mermaid
+flowchart LR
+    subgraph Input
+        CSV[(Amazon CSV)]
+        API[API Request]
+    end
+    
+    subgraph Processing
+        Loader[Data Loader]
+        Preprocessor[Preprocessor]
+        Embedder[Embedder]
+    end
+    
+    subgraph Storage
+        Model[(ML Model)]
+        Vectors[(Qdrant)]
+    end
+    
+    subgraph Output
+        Prediction[Prediction]
+        Answer[Q&A Answer]
+    end
+    
+    CSV --> Loader --> Preprocessor --> Model --> Prediction
+    CSV --> Loader --> Embedder --> Vectors
+    API --> Preprocessor
+    API --> Vectors --> Answer
 ```
 
 ## Quick Start
@@ -150,6 +214,23 @@ Response:
 - `POST /predict/explain` - SHAP explanation for predictions
 - `POST /qa/index` - Index data for RAG
 - `GET /qa/search` - Semantic product search
+- `GET /analysis/summary` - Dataset analysis
+
+## Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+| Document | Description |
+|----------|-------------|
+| [Architecture Overview](docs/architecture/overview.md) | High-level system design with Mermaid diagrams |
+| [ML Pipeline](docs/architecture/ml-pipeline.md) | Machine learning model architecture |
+| [RAG System](docs/architecture/rag-system.md) | Retrieval-augmented generation details |
+| [Data Flow](docs/architecture/data-flow.md) | Data processing pipelines |
+| [API Reference](docs/api/endpoints.md) | Complete API documentation |
+| [Development Setup](docs/development/setup.md) | Local development guide |
+| [Testing Guide](docs/development/testing.md) | Testing strategy and examples |
+| [Docker Deployment](docs/deployment/docker.md) | Container deployment guide |
+| [Monitoring Guide](docs/deployment/monitoring.md) | Observability setup |
 
 ## Project Structure
 
@@ -163,11 +244,17 @@ Marketing-Data-Intelligence/
 │   ├── rag/                  # RAG system (embedder, indexer, retriever)
 │   ├── llm/                  # Gemini client and prompts
 │   ├── data/                 # Data loading and preprocessing
+│   ├── analysis/             # EDA module
 │   └── observability/        # Metrics and logging
 ├── tests/
 │   ├── unit/                 # Unit tests
 │   ├── integration/          # Integration tests
 │   └── load/                 # Load tests (Locust)
+├── docs/                     # Documentation
+│   ├── architecture/         # Architecture docs with Mermaid
+│   ├── api/                  # API reference
+│   ├── development/          # Development guides
+│   └── deployment/           # Deployment guides
 ├── monitoring/               # Prometheus & Grafana config
 ├── docker-compose.yml
 └── Dockerfile
@@ -190,6 +277,22 @@ uv run locust -f tests/load/locustfile.py --host=http://localhost:8000
 ```
 
 ## Monitoring
+
+```mermaid
+graph LR
+    App[FastAPI App] -->|metrics| Prometheus
+    Prometheus -->|visualize| Grafana
+    App -->|logs| StructLog
+    
+    subgraph "Dashboards"
+        RequestRate[Request Rate]
+        Latency[Latency P95]
+        ErrorRate[Error Rate]
+        ModelStatus[Model Status]
+    end
+    
+    Grafana --> RequestRate & Latency & ErrorRate & ModelStatus
+```
 
 Start the monitoring stack:
 ```bash
@@ -226,6 +329,38 @@ Train with sample data (for testing):
 python -m src.ml.trainer --sample
 ```
 
+## Technology Stack
+
+```mermaid
+graph TB
+    subgraph "Frontend/API"
+        FastAPI[FastAPI]
+        Pydantic[Pydantic]
+    end
+    
+    subgraph "Machine Learning"
+        LightGBM[LightGBM]
+        SHAP[SHAP]
+        SciKit[scikit-learn]
+    end
+    
+    subgraph "NLP/LLM"
+        SentenceT[Sentence Transformers]
+        Gemini[Google Gemini]
+    end
+    
+    subgraph "Data/Storage"
+        Pandas[Pandas]
+        Qdrant[Qdrant]
+    end
+    
+    subgraph "Infrastructure"
+        Docker[Docker]
+        Prometheus[Prometheus]
+        Grafana[Grafana]
+    end
+```
+
 ## Metrics
 
 The system exposes Prometheus metrics:
@@ -238,6 +373,24 @@ The system exposes Prometheus metrics:
 - `rag_results_count` - Number of RAG results per query
 - `model_loaded` - ML model status gauge
 
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`uv run pytest`)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
 ## License
 
 MIT License
+
+## Acknowledgments
+
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework
+- [LightGBM](https://lightgbm.readthedocs.io/) - Gradient boosting framework
+- [Qdrant](https://qdrant.tech/) - Vector database
+- [Google Gemini](https://ai.google.dev/) - Large language model
+- [SHAP](https://shap.readthedocs.io/) - Model explainability
