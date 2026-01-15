@@ -18,38 +18,38 @@ An intelligent ML system for marketing data analysis featuring discount predicti
 
 ```mermaid
 graph TB
-    subgraph "Client Layer"
+    subgraph Client_Layer["Client Layer"]
         Client[Client Applications]
     end
     
-    subgraph "API Layer"
+    subgraph API_Layer["API Layer"]
         FastAPI[FastAPI Application]
-        subgraph "Endpoints"
-            Predict[/predict_discount]
-            QA[/answer_question]
-            Analysis[/analysis/summary]
+        subgraph Endpoints
+            Predict["predict_discount"]
+            QA["answer_question"]
+            Analysis["analysis"]
         end
     end
     
-    subgraph "Core Services"
-        subgraph "ML Engine"
+    subgraph Core_Services["Core Services"]
+        subgraph ML_Engine["ML Engine"]
             LightGBM[LightGBM Predictor]
             SHAP[SHAP Explainer]
             Drift[Drift Detector]
         end
         
-        subgraph "RAG Engine"
+        subgraph RAG_Engine["RAG Engine"]
             Embedder[Sentence Transformers]
             Retriever[Document Retriever]
         end
     end
     
-    subgraph "External Services"
+    subgraph External_Services["External Services"]
         Qdrant[(Qdrant Vector DB)]
         Gemini[Gemini 2.0 Flash]
     end
     
-    subgraph "Monitoring"
+    subgraph Monitoring
         Prometheus[Prometheus]
         Grafana[Grafana]
     end
@@ -284,14 +284,17 @@ graph LR
     Prometheus -->|visualize| Grafana
     App -->|logs| StructLog
     
-    subgraph "Dashboards"
+    subgraph Dashboards
         RequestRate[Request Rate]
         Latency[Latency P95]
         ErrorRate[Error Rate]
         ModelStatus[Model Status]
     end
     
-    Grafana --> RequestRate & Latency & ErrorRate & ModelStatus
+    Grafana --> RequestRate
+    Grafana --> Latency
+    Grafana --> ErrorRate
+    Grafana --> ModelStatus
 ```
 
 Start the monitoring stack:
@@ -333,28 +336,28 @@ python -m src.ml.trainer --sample
 
 ```mermaid
 graph TB
-    subgraph "Frontend/API"
+    subgraph Frontend_API["Frontend & API"]
         FastAPI[FastAPI]
         Pydantic[Pydantic]
     end
     
-    subgraph "Machine Learning"
+    subgraph Machine_Learning["Machine Learning"]
         LightGBM[LightGBM]
         SHAP[SHAP]
         SciKit[scikit-learn]
     end
     
-    subgraph "NLP/LLM"
+    subgraph NLP_LLM["NLP & LLM"]
         SentenceT[Sentence Transformers]
         Gemini[Google Gemini]
     end
     
-    subgraph "Data/Storage"
+    subgraph Data_Storage["Data & Storage"]
         Pandas[Pandas]
         Qdrant[Qdrant]
     end
     
-    subgraph "Infrastructure"
+    subgraph Infrastructure
         Docker[Docker]
         Prometheus[Prometheus]
         Grafana[Grafana]
