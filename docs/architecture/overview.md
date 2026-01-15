@@ -8,60 +8,60 @@ The system is built as a modern, cloud-native application with microservices-rea
 
 ```mermaid
 graph TB
-    subgraph "Client Layer"
+    subgraph Client_Layer["Client Layer"]
         Client[Client Applications]
         Docs[API Documentation]
     end
     
-    subgraph "API Gateway Layer"
+    subgraph API_Gateway["API Gateway Layer"]
         FastAPI[FastAPI Application]
         CORS[CORS Middleware]
         Metrics[Metrics Middleware]
         Logging[Logging Middleware]
     end
     
-    subgraph "API Routes"
-        PredictRoute[/predict/*]
-        QARoute[/qa/*]
-        AnalysisRoute[/analysis/*]
-        HealthRoute[/health]
+    subgraph API_Routes["API Routes"]
+        PredictRoute["predict endpoints"]
+        QARoute["qa endpoints"]
+        AnalysisRoute["analysis endpoints"]
+        HealthRoute["health endpoint"]
     end
     
-    subgraph "Core Services"
-        Predictor[Discount Predictor<br/>LightGBM]
+    subgraph Core_Services["Core Services"]
+        Predictor["Discount Predictor - LightGBM"]
         RAG[RAG System]
         Analyzer[Data Analyzer]
     end
     
-    subgraph "ML Components"
+    subgraph ML_Components["ML Components"]
         Trainer[Model Trainer]
         Explainer[SHAP Explainer]
         DriftDetector[Drift Detector]
     end
     
-    subgraph "RAG Components"
-        Embedder[Text Embedder<br/>Sentence Transformers]
+    subgraph RAG_Components["RAG Components"]
+        Embedder["Text Embedder - Sentence Transformers"]
         Indexer[Document Indexer]
         Retriever[Document Retriever]
     end
     
-    subgraph "LLM Layer"
+    subgraph LLM_Layer["LLM Layer"]
         GeminiClient[Gemini Client]
         Prompts[Prompt Templates]
     end
     
-    subgraph "Data Layer"
+    subgraph Data_Layer["Data Layer"]
         DataLoader[Data Loader]
         Preprocessor[Feature Preprocessor]
     end
     
-    subgraph "External Services"
-        Qdrant[(Qdrant<br/>Vector DB)]
+    subgraph External_Services["External Services"]
+        Qdrant[("Qdrant Vector DB")]
         GeminiAPI[Google Gemini API]
-        FileSystem[(File System<br/>Models & Data)]
+        FileSystem[("File System - Models & Data")]
     end
     
-    subgraph "Observability"
+    subgraph Observability
         Prometheus[Prometheus]
         Grafana[Grafana]
         StructLog[Structured Logging]
@@ -105,19 +105,23 @@ graph TB
 ## High-Level Component Diagram
 
 ```mermaid
-C4Context
-    title Marketing Data Intelligence - System Context
-
-    Person(user, "User", "Marketing analyst or developer")
+graph LR
+    User["👤 User<br/>Marketing analyst or developer"]
     
-    System(mdi, "Marketing Data Intelligence", "ML-powered marketing analytics platform")
+    subgraph MDI["Marketing Data Intelligence"]
+        API[FastAPI]
+        ML[ML Engine]
+        RAG_Sys[RAG System]
+    end
     
-    System_Ext(gemini, "Google Gemini", "LLM for Q&A")
-    System_Ext(qdrant, "Qdrant", "Vector database")
+    Gemini["🤖 Google Gemini<br/>LLM for Q&A"]
+    Qdrant_DB["🗄️ Qdrant<br/>Vector database"]
     
-    Rel(user, mdi, "Uses", "HTTP/REST")
-    Rel(mdi, gemini, "Queries", "HTTPS")
-    Rel(mdi, qdrant, "Stores/Retrieves vectors", "HTTP")
+    User -->|"HTTP/REST"| API
+    API --> ML
+    API --> RAG_Sys
+    RAG_Sys -->|"HTTPS"| Gemini
+    RAG_Sys -->|"HTTP"| Qdrant_DB
 ```
 
 ## Component Interaction Flow
@@ -132,16 +136,16 @@ sequenceDiagram
     participant G as Gemini
     
     Note over C,G: Discount Prediction Flow
-    C->>API: POST /predict_discount
-    API->>P: predict_from_features()
+    C->>API: POST predict_discount
+    API->>P: predict_from_features
     P->>P: Transform features
     P->>P: LightGBM predict
     P-->>API: Prediction + Confidence
     API-->>C: JSON Response
     
-    Note over C,G: Q&A (RAG) Flow
-    C->>API: POST /answer_question
-    API->>R: answer_question()
+    Note over C,G: Q&A RAG Flow
+    C->>API: POST answer_question
+    API->>R: answer_question
     R->>R: Embed query
     R->>Q: Vector search
     Q-->>R: Relevant documents
@@ -169,55 +173,55 @@ sequenceDiagram
 
 ```mermaid
 graph LR
-    subgraph "src/"
+    subgraph src["src"]
         main[main.py]
         config[config.py]
         
-        subgraph "api/"
-            routes[routes/]
+        subgraph api["api"]
+            routes[routes]
             schemas[schemas.py]
         end
         
-        subgraph "ml/"
+        subgraph ml["ml"]
             predictor[predictor.py]
             trainer[trainer.py]
             explainer[explainer.py]
             drift[drift.py]
         end
         
-        subgraph "rag/"
+        subgraph rag["rag"]
             embedder[embedder.py]
             indexer[indexer.py]
             retriever[retriever.py]
         end
         
-        subgraph "llm/"
+        subgraph llm["llm"]
             gemini[gemini_client.py]
             prompts[prompts.py]
         end
         
-        subgraph "data/"
+        subgraph data["data"]
             loader[loader.py]
-            preprocessor[preprocessor.py]
+            preprocessor_file[preprocessor.py]
         end
         
-        subgraph "analysis/"
+        subgraph analysis["analysis"]
             eda[eda.py]
         end
         
-        subgraph "observability/"
+        subgraph observability["observability"]
             logging_mod[logging.py]
-            metrics[metrics.py]
+            metrics_file[metrics.py]
         end
     end
     
-    main --> api/
-    main --> ml/
-    main --> rag/
-    main --> llm/
-    main --> data/
-    main --> analysis/
-    main --> observability/
+    main --> api
+    main --> ml
+    main --> rag
+    main --> llm
+    main --> data
+    main --> analysis
+    main --> observability
 ```
 
 ## Design Principles
@@ -256,15 +260,15 @@ Core services use singleton pattern for resource efficiency:
 
 ```mermaid
 graph TB
-    subgraph "Horizontal Scaling"
+    subgraph Horizontal_Scaling["Horizontal Scaling"]
         LB[Load Balancer]
         API1[API Instance 1]
         API2[API Instance 2]
         API3[API Instance N]
     end
     
-    subgraph "Shared State"
-        Qdrant[(Qdrant Cluster)]
+    subgraph Shared_State["Shared State"]
+        QdrantCluster[(Qdrant Cluster)]
         ModelStore[(Model Storage)]
     end
     
@@ -272,9 +276,9 @@ graph TB
     LB --> API2
     LB --> API3
     
-    API1 --> Qdrant
-    API2 --> Qdrant
-    API3 --> Qdrant
+    API1 --> QdrantCluster
+    API2 --> QdrantCluster
+    API3 --> QdrantCluster
     
     API1 --> ModelStore
     API2 --> ModelStore
