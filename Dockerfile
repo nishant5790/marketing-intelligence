@@ -3,7 +3,7 @@
 # ============================================================================
 # Stage 1: Builder
 # ============================================================================
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -18,7 +18,7 @@ ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /app
 
 # Copy dependency files
-COPY pyproject.toml .
+COPY pyproject.toml README.md ./
 
 # Create virtual environment and install dependencies
 RUN uv venv /app/.venv
@@ -30,7 +30,7 @@ RUN uv pip install --no-cache .
 # ============================================================================
 # Stage 2: Runtime
 # ============================================================================
-FROM python:3.11-slim as runtime
+FROM python:3.11-slim AS runtime
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

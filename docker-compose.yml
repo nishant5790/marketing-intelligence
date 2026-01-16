@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ===========================================================================
   # Main Application
@@ -54,7 +52,7 @@ services:
       - marketing-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/6333'"]
       interval: 10s
       timeout: 5s
       retries: 5
